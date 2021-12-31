@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta charset="utf-8">
+  <title>Santa minions 2022</title>
+  <script src="/socket.io/socket.io.js"></script>
+
+  <link rel="stylesheet" href="style.css">
+  <script src="game.js"></script>
+  <script src="chunk.js"></script>
+  <script src="world.js"></script>
+  <script src="player.js"></script>
+  <script src="tiles.js"></script>
+  <script src="tile-objects.js"></script>
+  <script src="aabb.js"></script>
+  <script src="particles.js"></script>
+</head>
+
+<body>
+  <canvas id="main-canvas"></canvas>
+  <div style="display:none;">
+    <img id="img-player-0" src="assets/player.png">
+    <img id="img-tiles" src="assets/tiles.png" crossorigin="anonymous">
+    <img id="img-objects" src="assets/objects.png">
+    <img id="img-particles" src="assets/particles.png">
+
+    <canvas id="texture-canvas" width="512" height="512"></canvas>
+  </div>
+
+  <script src="app.js" charset="utf-8"></script>
+</body>
+
+</html>
