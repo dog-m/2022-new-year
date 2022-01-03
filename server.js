@@ -11,7 +11,7 @@ const png = require('png-js');
 
 // setup server
 app.use(express.static(path.join(__dirname, "public")));
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () => console.log(`Server running on 127.0.0.1:${PORT}`));
 
 
 io.on('connection', socket => {
@@ -87,7 +87,7 @@ io.on('connection', socket => {
   socket.on('player-position', playerInfo => {
     // check the player
     const player = players.get(playerInfo.id);
-    if (!player /*|| connections.get(socket) !== playerInfo.id*/) {
+    if (!player /*|| connections.get(socket) != playerInfo.id*/) {
       socket.disconnect();
       return;
     }
@@ -114,12 +114,12 @@ io.on('connection', socket => {
 
 function buildChunkResponce(chunkRequest) {
   // copy parts of data
-  const dataTiles = new Array(CHUNK_SIZE * CHUNK_SIZE);
-  const dataObjects = new Array(CHUNK_SIZE * CHUNK_SIZE);
+  const dataTiles = new Array(CHUNK_SIZE_SQR);
+  const dataObjects = new Array(CHUNK_SIZE_SQR);
   const zeroTileIndex =
-    (chunkRequest.cx * CHUNK_SIZE) + (chunkRequest.cy * CHUNK_SIZE) * WORLD_WIDTH;
+    (chunkRequest.cx + chunkRequest.cy * WORLD_WIDTH) * CHUNK_SIZE;
 
-  // tiles first
+  // tiles
   for (let y = 0, wIdx, i = 0; y < CHUNK_SIZE; y++) {
     wIdx = zeroTileIndex + y * WORLD_WIDTH;
 
@@ -127,7 +127,7 @@ function buildChunkResponce(chunkRequest) {
       dataTiles[i] = worldData.tiles[wIdx];
   }
 
-  // then objects
+  // stationary objects
   for (let y = 0, wIdx, i = 0; y < CHUNK_SIZE; y++) {
     wIdx = zeroTileIndex + y * WORLD_WIDTH;
 
@@ -205,12 +205,13 @@ const randomPickups = [
 ];
 
 const CHUNK_SIZE = 8;
+const CHUNK_SIZE_SQR = CHUNK_SIZE * CHUNK_SIZE;
 
 const WORLD_WIDTH = 128;
 const WORLD_HEIGHT = 128;
 let worldData = {
-  tiles: new Array(WORLD_WIDTH * WORLD_HEIGHT).fill(0),
-  objects: new Array(WORLD_WIDTH * WORLD_HEIGHT).fill(0),
+  tiles: new Array(WORLD_WIDTH * WORLD_HEIGHT).fill(tiles.ground),
+  objects: new Array(WORLD_WIDTH * WORLD_HEIGHT).fill(objects.nothing),
 };
 let worldDataBackup = null;
 

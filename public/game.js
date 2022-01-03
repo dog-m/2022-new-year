@@ -1,4 +1,5 @@
-const SPEED_PLAYER_MAX = 0.1;
+const SPEED_PLAYER_DEFAULT = 0.1;
+const SPEED_PLAYER_ICE = SPEED_PLAYER_DEFAULT * 4;
 
 function Game(mainPlayerImageIndex) {
 
@@ -20,7 +21,7 @@ function Game(mainPlayerImageIndex) {
 
   // === UPDATES =====================================================================
 
-  let q = 0;
+  let updateCounter = 0;
 
   const snowEmitter = {
     counter: 0,
@@ -30,6 +31,8 @@ function Game(mainPlayerImageIndex) {
   };
 
   this.update = function () {
+    ++updateCounter;
+
     // fancy stuff
     this.particles.update();
 
@@ -53,30 +56,30 @@ function Game(mainPlayerImageIndex) {
     // primary player manual control
     if (this.mainPlayer !== null) {
       let steeringWeight = 1;
-      let maxSpeed = SPEED_PLAYER_MAX;
+      let speed = SPEED_PLAYER_DEFAULT;
 
       if (this.mainPlayer.standingOnTile === tileIce.id) {
         steeringWeight = 0.03;
-        maxSpeed *= 4;
+        speed = SPEED_PLAYER_ICE;
       }
 
       // automatic "AI" for phone users
       if (this.mainPlayer.isMobile)
-        this.doSelfDriving(this.mainPlayer, maxSpeed, steeringWeight);
+        this.doSelfDriving(this.mainPlayer, speed, steeringWeight);
 
       // keyboard inputs
-      if (input.left) this.mainPlayer.speed.x = lerp(-maxSpeed, this.mainPlayer.speed.x, steeringWeight);
-      if (input.right) this.mainPlayer.speed.x = lerp(+maxSpeed, this.mainPlayer.speed.x, steeringWeight);
-      if (input.down) this.mainPlayer.speed.y = lerp(+maxSpeed, this.mainPlayer.speed.y, steeringWeight);
-      if (input.up) this.mainPlayer.speed.y = lerp(-maxSpeed, this.mainPlayer.speed.y, steeringWeight);
+      if (input.left) this.mainPlayer.speed.x = lerp(-speed, this.mainPlayer.speed.x, steeringWeight);
+      if (input.right) this.mainPlayer.speed.x = lerp(+speed, this.mainPlayer.speed.x, steeringWeight);
+      if (input.down) this.mainPlayer.speed.y = lerp(+speed, this.mainPlayer.speed.y, steeringWeight);
+      if (input.up) this.mainPlayer.speed.y = lerp(-speed, this.mainPlayer.speed.y, steeringWeight);
 
       if (this.hintTimeout > 0) {
         --this.hintTimeout;
       } else {
-        if (input.quit) {
+        if (input.hint) {
           this.hintTimeout = HINT_TIMEOUT;
 
-          this.showHint();
+          this.showHintParticles();
         }
       }
 
@@ -93,10 +96,10 @@ function Game(mainPlayerImageIndex) {
       this.camera.x = this.mainPlayer.pos.x;
       this.camera.y = this.mainPlayer.pos.y - 0.25;
     }
-    this.camera.angle = Math.sin(q += 0.007) * 0.02;
+    this.camera.angle = Math.sin(updateCounter * 0.007) * 0.02;
   }
 
-  this.showHint = function () {
+  this.showHintParticles = function () {
     // spawn hinting trail
     let px = 0, py = 0, minDist = 999999, found = false;
 
@@ -110,8 +113,12 @@ function Game(mainPlayerImageIndex) {
     for (let y = 0; y < WORLD_WIDTH; y++)
       for (let x = 0; x < WORLD_WIDTH; x++) {
         const objId = this.world.getTileObject(x, y);
+
         if (potentialTargets.has(objId)) {
+          // evaluate distance to it
           const dist2 = sqr(this.camera.x - x) + sqr(this.camera.y - y);
+
+          // is it closer to us?
           if (dist2 < minDist) {
             minDist = dist2;
             px = x;
@@ -161,8 +168,8 @@ function Game(mainPlayerImageIndex) {
     let dx = player.speed.x;
     let dy = player.speed.y;
 
-    let lastSpeedX = dx;
-    let lastSpeedY = dy;
+    const lastSpeedX = dx;
+    const lastSpeedY = dy;
 
     player.aabb.expand(player.speed.x, player.speed.y);
     const worldBoxes = this.world.getAABBsIn(player.aabb);
@@ -252,26 +259,15 @@ function Game(mainPlayerImageIndex) {
 
   this.renderList = [];
 
-  let N = 0;
-  const overlay = {
-    size: { x: 20, y: 14 },
-    style: 'rgba(0, 0, 0, 0.1)',
-  }
+  let frameCounter = 0;
 
   this.render = function (ctx) {
     const viewPoint = this.mainPlayer ? this.mainPlayer.pos : this.camera;
     // the world around us
     this.world.renderTiles(ctx, viewPoint);
 
-    // darkening overlay
-    /*ctx.fillStyle = overlay.style;
-    ctx.fillRect(
-      viewPoint.x - overlay.size.x / 2,
-      viewPoint.y - overlay.size.y / 2,
-      overlay.size.x, overlay.size.y);*/
-
     // sometimes we need to reorder things around...
-    if (N++ % 2 === 0) {
+    if (frameCounter++ % 2 === 0) {
       // Y-level sorting for pseudo-depth
       this.renderList = [];
       // request all visible objects
@@ -289,33 +285,6 @@ function Game(mainPlayerImageIndex) {
 
     // fancy stuff
     this.particles.render(ctx);
-
-    // debug boxes
-    /*if (this.mainPlayer !== null) {
-      // player AABB
-      /*ctx.strokeRect(
-        this.mainPlayer.aabb.x1, this.mainPlayer.aabb.y1,
-        this.mainPlayer.aabb.x2 - this.mainPlayer.aabb.x1,
-        this.mainPlayer.aabb.y2 - this.mainPlayer.aabb.y1);
-
-      ctx.strokeRect(
-        this.mainPlayer.pos.x - 0.05,
-        this.mainPlayer.pos.y - 0.05,
-        0.1,
-        0.1);
-    }*/
-
-    /*ctx.strokeRect(
-      this.camera.x - 0.5 * snowEmitter.size.x,
-      this.camera.y - 0.9 * snowEmitter.size.y,
-      snowEmitter.size.x, snowEmitter.size.y);*/
-
-    // tile fetching dot
-    /*ctx.strokeRect(
-      this.camera.x - 0.05,
-      this.camera.y - 0.05,
-      0.1,
-      0.1);*/
   }
 
   // === NETWORKING =====================================================================
@@ -340,7 +309,7 @@ function Game(mainPlayerImageIndex) {
       // hook-up
       this.mainPlayer = newPlayer;
 
-      // update cached packet
+      // configure cached packet
       movementPacket.pos = this.mainPlayer.pos;
       movementPacket.speed = this.mainPlayer.speed;
 
@@ -355,8 +324,13 @@ function Game(mainPlayerImageIndex) {
   socket.on('despawn-player', pId => {
     this.players.delete(pId);
 
-    if (pId == this.playerId)
+    if (pId === this.playerId) {
       this.mainPlayer = null;
+
+      // disable update timer
+      clearInterval(positionTimer);
+      positionTimer = null;
+    }
   });
 
 
@@ -371,6 +345,7 @@ function Game(mainPlayerImageIndex) {
       aPlayer.speed.y = info.speed.y;
 
       if (info.id === this.playerId) {
+        // straight "teleportation"
         aPlayer.targetPos = null;
         aPlayer.pos.x = info.pos.x;
         aPlayer.pos.y = info.pos.y;
@@ -382,7 +357,7 @@ function Game(mainPlayerImageIndex) {
 
   socket.on('world-invalidate', () => {
     const chunksToLoad = new Array(this.world.chunks.length);
-    for (let i = 0; i < this.world.chunks.length; i++)
+    for (let i = 0; i < chunksToLoad.length; i++)
       chunksToLoad[i] = {
         cx: i % WORLD_WIDTH_CHUNKS,
         cy: Math.floor(i / WORLD_WIDTH_CHUNKS)
@@ -398,14 +373,15 @@ function Game(mainPlayerImageIndex) {
     });
 
     // setup world-loading timer
-    let wlTimer = setInterval(() => {
+    const WORLD_LOADING_INTERVAL = 25;
+    const wlTimer = setInterval(() => {
       // request a chunk from the server
       socket.emit('world-chunk-get', chunksToLoad.pop());
 
       // disarm the timer at the end of the request chain
       if (chunksToLoad.length === 0)
         clearInterval(wlTimer);
-    }, 25);
+    }, WORLD_LOADING_INTERVAL);
   });
 
 
@@ -475,7 +451,7 @@ const KEY = {
   UP: 38,
   LEFT: 37,
   DOWN: 40,
-  Q: 81,
+  H: 72,
 };
 
 const input = {
@@ -483,7 +459,8 @@ const input = {
   up: false,
   left: false,
   down: false,
-  quit: false
+
+  hint: false,
 };
 
 function press(evt) {
@@ -501,7 +478,7 @@ function press(evt) {
     case KEY.DOWN:
     case KEY.S: input.down = true; break;
 
-    case KEY.Q: input.quit = true; break;
+    case KEY.H: input.hint = true; break;
   }
 }
 
@@ -520,7 +497,7 @@ function release(evt) {
     case KEY.DOWN:
     case KEY.S: input.down = false; break;
 
-    case KEY.Q: input.quit = false; break;
+    case KEY.H: input.hint = false; break;
 
     default: console.error('unrecognized key code: ' + code); break;
   }

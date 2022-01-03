@@ -2,7 +2,7 @@
 
 // set-up the canvas element
 const canvas = document.getElementById('main-canvas');
-const SCALE_BASE = 42.0;
+const SCALE_BASE = 24 * 1.75;
 let SCALE = SCALE_BASE;
 let screenWidth, screenHeight, ctx;
 
@@ -20,8 +20,9 @@ window.addEventListener('load', () => {
   TILES_ATLAS_WIDTH = atlas.width;
 
   TILE_OBJECTS_IMAGE = document.getElementById('img-objects');
-
   PARTICLES_IMAGE = document.getElementById('img-particles');
+  for (let i = 0; i < 1; i++)
+    PLAYER_TEXTURES.push(document.getElementById('img-player-' + i));
 
   // setup updates
   setInterval(() => update(), 1000 / UPDATES_EXPECTED);

@@ -8,11 +8,11 @@ function TileObject(objectId, config) {
   TILE_OBJECTS.set(objectId, this);
 
   this.frame = {
-    x: config.x || 0,
-    y: config.y || 0,
-    w: config.w || 16,
-    h: config.h || 16,
-    offsetY: config.offsetY || 1e-5
+    x: config.x ?? 0,
+    y: config.y ?? 0,
+    w: config.w ?? 16,
+    h: config.h ?? 16,
+    offsetY: config.offsetY ?? 1e-5
   };
 
   this.render = function (ctx, x, y) {
@@ -28,12 +28,6 @@ function TileObject(objectId, config) {
       this.frame.h,
       // destination
       x - sizeX / 2, y - sizeY + this.frame.offsetY, sizeX, sizeY);
-
-    /*ctx.strokeRect(
-      x - 0.05,
-      y - 0.05,
-      0.1,
-      0.1);*/
   };
 }
 

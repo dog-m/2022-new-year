@@ -1,6 +1,6 @@
 function AABB() {
-  this.x1 = -1000;
-  this.y1 = -1000;
+  this.x1 = -1001;
+  this.y1 = -1001;
   this.x2 = -1000;
   this.y2 = -1000;
 
@@ -76,8 +76,12 @@ function AABBCache() {
   };
 
   this.releaseAll = function (waitingBoxes) {
+    // make everyone inactive
     for (let box of waitingBoxes)
       this.inactiveBoxes.push(box);
+
+    // cleanup
+    waitingBoxes.length = 0;
   }
 }
 

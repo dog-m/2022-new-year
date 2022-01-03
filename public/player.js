@@ -1,8 +1,10 @@
+const PLAYER_TEXTURES = [];
+
 function Player(config, imageIndex, world) {
   this.id = config.id;
 
   this.texture = {
-    image: document.getElementById('img-player-' + imageIndex),
+    image: PLAYER_TEXTURES[imageIndex],
     frame: {
       sx: 0,
       sy: 0,

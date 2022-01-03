@@ -12,10 +12,11 @@ function Chunk(posX, posY) {
 
   this.dynamicObjects = [];
 
-  function DynamicObject(tileObjectSrc, x, y) {
+  // a stationary object that queued to be rendered sometime in the future
+  function DynamicObject(tileObjectSrc, px, py) {
     this.pos = {
-      x: x,
-      y: y
+      x: px,
+      y: py
     };
 
     this.render = function (ctx) {
@@ -50,9 +51,6 @@ function Chunk(posX, posY) {
 
     // reset and instantiate dynamic objects
     this.rebuildDynamicObjects();
-
-    // mark this chunk as "dirty"
-    //this.isDirty = true;
   }
 
   this.loadFromResponce = function (responce) {
@@ -69,8 +67,10 @@ function Chunk(posX, posY) {
 
   this.rebuildDynamicObjects = function () {
     this.dynamicObjects.length = 0;
-    const cx = (this.pos.x << CHUNK_SIZE_2);
-    const cy = (this.pos.y << CHUNK_SIZE_2);
+
+    const cx = this.pos.x << CHUNK_SIZE_2;
+    const cy = this.pos.y << CHUNK_SIZE_2;
+
     for (let y = 0, i = 0; y < CHUNK_SIZE; y++)
       for (let x = 0; x < CHUNK_SIZE; x++, i++) {
         const objId = this.tileObjects[i];
@@ -97,8 +97,8 @@ function Chunk(posX, posY) {
     const cx = (this.pos.x << CHUNK_SIZE_2) - 0.5;
     const cy = (this.pos.y << CHUNK_SIZE_2) - 0.5;
 
-    // construct single texture if needed
-    if (this.isDirty || !this.textureData) {
+    // reconstruct single texture if needed
+    if (this.isDirty) {
       this.isDirty = false;
       this.rebuildTexture(ctx);
     }
@@ -113,14 +113,14 @@ function Chunk(posX, posY) {
   }
 
   this.rebuildTexture = function (ctx) {
+    const maxDimension = CHUNK_SIZE * TILE_SIZE;
     // create blank new image if needed
     if (!this.textureData)
-      this.textureData = ctx.createImageData(CHUNK_SIZE * TILE_SIZE, CHUNK_SIZE * TILE_SIZE);
+      this.textureData = ctx.createImageData(maxDimension, maxDimension);
 
     // copy parts from texture atlas on every tile
-    const max = CHUNK_SIZE * TILE_SIZE;
-    for (let y = 0, i = 0; y < max; y += TILE_SIZE)
-      for (let x = 0; x < max; x += TILE_SIZE, i++)
+    for (let y = 0, i = 0; y < maxDimension; y += TILE_SIZE)
+      for (let x = 0; x < maxDimension; x += TILE_SIZE, i++)
         this.drawTile(this.tiles[i], x, y);
 
     // transform into a bitmap (will be done sometime later)
